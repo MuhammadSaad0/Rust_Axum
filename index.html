@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Rust CRUD</title>
+    <style>
+      table {
+        border-collapse: collapse;
+        width: 40%;
+        border: 2px solid #ccc;
+        bottom: 3rem;
+      }
+      th,
+      td {
+        border: 1px solid #ccc;
+        padding: 8px;
+        text-align: center;
+      }
+      #title {
+        margin-left: 35%;
+        margin-top: 2%;
+        width: 10%;
+        outline: 2px solid black;
+      }
+      #body {
+        width: 10%;
+        margin-left: 1%;
+        outline: 2px solid black;
+      }
+      #deleteId {
+        width: 10%;
+        margin-left: 42%;
+        margin-top: 4%;
+        outline: 2px solid black;
+      }
+      #heading {
+        margin-left: 40%;
+      }
+      #postButton {
+        margin-left: 1%;
+        background-color: green;
+        color: white;
+        height: 2rem;
+        border-radius: 10px;
+      }
+
+      #deleteButton {
+        margin-left: 1%;
+        background-color: red;
+        color: white;
+        height: 2rem;
+        border-radius: 10px;
+      }
+
+      #tableDiv {
+        position: relative;
+        margin-top: 3%;
+        margin-left: 36%;
+      }
+
+      #result{
+        margin-left: 40%;
+      }
+
+      #updateId{
+        margin-top: 4%;
+        margin-left: 28%;
+        outline: 2px solid black;
+      }
+      
+      #updateTitle{
+        outline: 2px solid black;
+        margin-left: 1%;
+      }
+
+      #updateBody{
+        outline: 2px solid black;
+        margin-left: 1%;
+      }
+
+      #updateButton{
+        background-color: rgb(182, 182, 5);
+        color: white;
+        height: 2rem;
+        margin-left: 1%;
+        border-radius: 10px;
+      }
+      
+    </style>
+  </head>
+  <body>
+    <div>
+    <h1 id="heading">Rust CRUD API</h1>
+    <input type="text" id="title" placeholder="title" title="title" />
+    <input type="text" id="body" placeholder="body" title="body" />
+
+    <button id="postButton">Post Data</button>
+    <div id="result"></div>
+    <input type="text" placeholder="id" title="id" id="deleteId"/>
+    <button id="deleteButton">Delete Data</button>
+    <div>
+    <input type="text" placeholder="id" title="id" id="updateId"/>
+    <input type="text" placeholder="title" title="title" id="updateTitle"/>
+    <input type="text" placeholder="body" title="body" id="updateBody"/>
+    <button id="updateButton">Update Data</button></div>
+
+    <div id="tableDiv">
+      <table id="data-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Title</th>
+            <th>Body</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <script>
+      document.getElementById("postButton").addEventListener("click", postData);
+      document.getElementById("deleteButton").addEventListener("click", deleteData);
+      document.getElementById("updateButton").addEventListener("click", updateData);
+      let titleel = document.getElementById("title");
+      let bodyel = document.getElementById("body");
+      let idel = document.getElementById("deleteId");
+      const updtitle = document.getElementById('updateTitle');
+      const updbody = document.getElementById('updateBody');
+      const updid = document.getElementById('updateId');
+
+      function postData() {
+        const dataToSend = {
+          title: titleel.value,
+          body: bodyel.value,
+        };
+
+        fetch("http://localhost:3690/insert", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(dataToSend),
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            const resultDiv = document.getElementById("result");
+            resultDiv.innerHTML = `
+                    <h2>Response:</h2>
+                    <pre>${data}</pre>
+                `;
+            getData();
+            setTimeout(() => {
+                resultDiv.innerHTML = "";
+            }, 2000)
+          });
+      }
+
+      function updateData() {
+        console.log(updid.value, updtitle.value, updbody.value)
+        let requestBody = {
+        };
+        if (updtitle.value != "" && updbody.value != "") {
+            requestBody = { id: parseInt(updid.value), title: updtitle.value, body: updbody.value };
+        } else if (updtitle.value != "") {
+            requestBody = { id: parseInt(updid.value), title: updtitle.value };
+        } else if (updbody.value != "") {
+            requestBody = { id: parseInt(updid.value), body: updbody.value };
+        } else{
+            requestBody = { id: parseInt(updid.value)};
+        }
+        console.log(requestBody);
+        fetch("http://localhost:3690/update", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(requestBody),
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            const resultDiv = document.getElementById("result");
+            resultDiv.innerHTML = `
+                    <h2>Response:</h2>
+                    <pre>${data}</pre>
+                `;
+            getData();
+            setTimeout(() => {
+                resultDiv.innerHTML = "";
+            }, 2000)
+          });
+      }
+      function deleteData() {
+        const dataToSend = {
+          id: parseInt(idel.value),
+        };
+
+        fetch("http://localhost:3690/delete", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(dataToSend),
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            const resultDiv = document.getElementById("result");
+            resultDiv.innerHTML = `
+                    <h2>Response:</h2>
+                    <pre>${data}</pre>
+                `;
+            getData();
+            setTimeout(() => {
+                resultDiv.innerHTML = "";
+            }, 2000)
+          });
+      }
+      function getData() {
+        fetch("http://localhost:3690/get", {
+          method: "GET",
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            const tableBody = document.querySelector("#data-table tbody");
+            tableBody.innerHTML = "";
+
+            data.forEach((item) => {
+              const row = document.createElement("tr");
+              const idCell = document.createElement("td");
+              const titleCell = document.createElement("td");
+              const bodyCell = document.createElement("td");
+              idCell.textContent = item.id;
+              titleCell.textContent = item.title;
+              bodyCell.textContent = item.body;
+              row.appendChild(idCell);
+              row.appendChild(titleCell);
+              row.appendChild(bodyCell);
+
+              tableBody.appendChild(row);
+            });
+          });
+      }
+
+      window.onload = getData;
+    </script>
+  </body>
+</html>
