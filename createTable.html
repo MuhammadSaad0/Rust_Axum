@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Create Table</title>
+    <script>
+      function fetchTableDetails() {
+        var tableName = document.getElementById("tableSelect").value;
+        fetch(`http://localhost:3690/gettableinfo/${tableName}`)
+          .then((response) => response.json())
+          .then((data) => {
+            console.log("DATA:", data);
+            document.getElementById("tableDetails").textContent =
+              JSON.stringify(data, null, 2);
+          })
+          .catch((error) => {
+            console.error("Error fetching table details:", error);
+          });
+      }
+      window.onload = function () {
+        fetch("http://localhost:3690/gettables")
+          .then((response) => response.json())
+          .then((data) => {
+            console.log(data);
+            var tableSelect = document.getElementById("tableSelect");
+            data.forEach((row) => {
+              console.log(row);
+              var option = document.createElement("option");
+              option.value = row.table_name;
+              option.textContent = row.table_name;
+              tableSelect.appendChild(option);
+            });
+          })
+          .catch((error) => {
+            console.error("Error fetching table names:", error);
+          });
+      };
+    </script>
+
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+      }
+      .column {
+        display: flex;
+        align-items: center;
+        margin-bottom: 10px;
+      }
+      .column select,
+      .column input {
+        margin-right: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Create Table</h1>
+    <form id="table-form">
+      <label for="table-name">Table Name:</label>
+      <input type="text" id="table-name" name="table_name" required /><br />
+
+      <div class="column">
+        <label for="column-name-1">Column Name:</label>
+        <input type="text" id="column-name-1" name="column_name" required />
+        <label for="column-type-1">Column Type:</label>
+        <select id="column-type-1" name="column_type">
+          <option value="VARCHAR(100)">VARCHAR</option>
+          <option value="Int">Int</option>
+        </select>
+      </div>
+
+      <div id="columns-container"></div>
+
+      <button type="button" id="add-column">Add Column</button>
+      <button type="submit" id="send-data">Send Data</button>
+    </form>
+
+    <script>
+      const addButton = document.getElementById("add-column");
+      const columnsContainer = document.getElementById("columns-container");
+      const form = document.getElementById("table-form");
+
+      let columnCounter = 2;
+
+      addButton.addEventListener("click", () => {
+        const newColumn = document.createElement("div");
+        newColumn.className = "column";
+        newColumn.innerHTML = `
+        <label for="column-name-${columnCounter}">Column Name:</label>
+        <input type="text" id="column-name-${columnCounter}" name="column_name" required>
+        <label for="column-type-${columnCounter}">Column Type:</label>
+        <select id="column-type-${columnCounter}" name="column_type">
+          <option value="VARCHAR(100)">VARCHAR</option>
+          <option value="Int">Int</option>
+          <!-- Add more options as needed -->
+        </select>
+      `;
+        columnsContainer.appendChild(newColumn);
+        columnCounter++;
+      });
+
+      form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+
+        const formData = new FormData(form);
+        const formDataObject = {};
+
+        formData.forEach((value, key) => {
+          if (key.includes("column_name") || key.includes("column_type")) {
+            if (!formDataObject[key]) {
+              formDataObject[key] = [];
+            }
+            formDataObject[key].push(value);
+          } else {
+            formDataObject[key] = value;
+          }
+        });
+        console.log(formDataObject);
+        const apiUrl = "http://localhost:3690/create";
+        try {
+          const response = await fetch(apiUrl, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(formDataObject),
+          });
+          alert(await response.json());
+          location.reload();
+        } catch (e) {
+          alert(await e.json());
+        }
+      });
+    </script>
+    <div style="margin-top: 5rem">
+      <label for="tableSelect">Select a Table:</label>
+      <select id="tableSelect" onclick="fetchTableDetails()"></select>
+      <h2>Table Details:</h2>
+      <pre id="tableDetails"></pre>
+    </div>
+  </body>
+</html>

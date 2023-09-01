@@ -1,3 +1,4 @@
+pub mod create;
 pub mod delete;
 pub mod get;
 pub mod insert;
@@ -8,8 +9,9 @@ use axum::{
     routing::post,
     Extension, Router,
 };
+use create::create;
 use delete::delete;
-use get::getposts;
+use get::{getposts, gettableinfo, gettables};
 use insert::insert;
 use sqlx::mysql::MySqlPoolOptions;
 use tower_http::cors::{Any, CorsLayer};
@@ -31,7 +33,10 @@ async fn main() {
         .route("/insert", post(insert))
         .route("/delete", post(delete))
         .route("/update", post(update))
-        .route("/get", get(getposts))
+        .route("/getposts", get(getposts))
+        .route("/gettables", get(gettables))
+        .route("/gettableinfo/:table", get(gettableinfo))
+        .route("/create", post(create))
         .layer(cors)
         .layer(Extension(pool));
 

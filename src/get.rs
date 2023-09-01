@@ -1,4 +1,4 @@
-use axum::{Extension, Json};
+use axum::{extract::Path, Extension, Json};
 use serde::Serialize;
 use sqlx::{MySql, Pool, Row};
 
@@ -21,4 +21,41 @@ pub async fn getposts(Extension(db): Extension<Pool<MySql>>) -> Json<Vec<ReturnS
         })
         .collect();
     Json(result)
+}
+
+#[derive(Debug, Serialize)]
+pub struct TablesInfoStruct {
+    table_name: String,
+}
+pub async fn gettables(Extension(db): Extension<Pool<MySql>>) -> Json<Vec<TablesInfoStruct>> {
+    let query = format!("SHOW tables");
+    let result = sqlx::query(&query).fetch_all(&db).await.unwrap();
+    let to_ret: Vec<TablesInfoStruct> = result
+        .iter()
+        .map(|row| TablesInfoStruct {
+            table_name: row.get("Tables_in_axum"),
+        })
+        .collect();
+    Json(to_ret)
+}
+
+#[derive(Debug, Serialize)]
+pub struct TableDescStruct {
+    field: String,
+    datatype: String,
+}
+pub async fn gettableinfo(
+    Extension(db): Extension<Pool<MySql>>,
+    Path(table): Path<String>,
+) -> Json<Vec<TableDescStruct>> {
+    let query = format!("DESCRIBE {}", table);
+    let result = sqlx::query(&query).fetch_all(&db).await.unwrap();
+    let to_ret: Vec<TableDescStruct> = result
+        .iter()
+        .map(|row| TableDescStruct {
+            field: row.get("Field"),
+            datatype: row.get("Type"),
+        })
+        .collect();
+    Json(to_ret)
 }
