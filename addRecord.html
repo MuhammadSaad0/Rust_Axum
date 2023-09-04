@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Insert Record</title>
+    <script>
+      function fetchTableDetails() {
+        var tableName = document.getElementById("tableSelect").value;
+        fetch(`http://localhost:3690/gettableinfo/${tableName}`)
+          .then((response) => response.json())
+          .then((data) => {
+            console.log("DATA:", data);
+            document.getElementById("tableDetails").textContent =
+              JSON.stringify(data, null, 2);
+
+            // Dynamically generate input fields based on column names and types
+            var inputFields = document.getElementById("inputFields");
+            inputFields.innerHTML = ""; // Clear previous input fields
+
+            data.forEach((column) => {
+              var label = document.createElement("label");
+              label.textContent = column.field + ": ";
+              var input = document.createElement("input");
+              input.name = column.field;
+              if (column.datatype.includes("varchar")) {
+                input.type = "text";
+              } else if (column.datatype === "int") {
+                input.type = "number";
+              }
+
+              inputFields.appendChild(label);
+              inputFields.appendChild(input);
+            });
+
+            // Create the "Add Record" button
+            var addButton = document.createElement("button");
+            addButton.textContent = "Add Record";
+            addButton.onclick = addRecord;
+            inputFields.appendChild(addButton);
+          })
+          .catch((error) => {
+            console.error("Error fetching table details:", error);
+          });
+      }
+
+      function addRecord() {
+        var tableName = document.getElementById("tableSelect").value;
+        var formData = new FormData();
+
+        // Get input values and add them to an array in order
+        var inputFields = document.querySelectorAll("#inputFields input");
+        var inputData = [];
+        inputFields.forEach((input) => {
+          inputData.push(input.value);
+          formData.append(input.name, input.value);
+        });
+
+        // Create the data object
+        var postData = {
+          tableName: tableName,
+          data: inputData,
+        };
+
+        fetch(`http://localhost:3690/addrecord`, {
+          method: "POST",
+          body: JSON.stringify(postData), // Send the data as JSON
+          headers: {
+            "Content-Type": "application/json", // Set the content type to JSON
+          },
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            console.log("Record added successfully:", data);
+          })
+          .catch((error) => {
+            console.error("Error adding record:", error);
+          });
+      }
+
+      window.onload = function () {
+        fetch("http://localhost:3690/gettables")
+          .then((response) => response.json())
+          .then((data) => {
+            console.log(data);
+            var tableSelect = document.getElementById("tableSelect");
+            data.forEach((row) => {
+              console.log(row);
+              var option = document.createElement("option");
+              option.value = row.table_name;
+              option.textContent = row.table_name;
+              tableSelect.appendChild(option);
+            });
+          })
+          .catch((error) => {
+            console.error("Error fetching table names:", error);
+          });
+      };
+    </script>
+
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+      }
+      .column {
+        display: flex;
+        align-items: center;
+        margin-bottom: 10px;
+      }
+      .column select,
+      .column input {
+        margin-right: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <div style="margin-top: 5rem">
+      <label for="tableSelect">Select a Table:</label>
+      <select id="tableSelect" onclick="fetchTableDetails()"></select>
+      <h2>Table Details:</h2>
+      <pre id="tableDetails"></pre>
+      <div id="inputFields"></div>
+      <!-- Input fields will be generated here -->
+    </div>
+  </body>
+</html>

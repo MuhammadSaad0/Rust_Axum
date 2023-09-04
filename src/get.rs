@@ -1,6 +1,8 @@
+use std::any::Any;
+
 use axum::{extract::Path, Extension, Json};
 use serde::Serialize;
-use sqlx::{MySql, Pool, Row};
+use sqlx::{Column, MySql, Pool, Row};
 
 #[derive(Debug, Serialize)]
 pub struct ReturnStruct {
@@ -44,6 +46,11 @@ pub struct TableDescStruct {
     field: String,
     datatype: String,
 }
+
+struct TestStruct {
+    value: Box<dyn Any>,
+}
+
 pub async fn gettableinfo(
     Extension(db): Extension<Pool<MySql>>,
     Path(table): Path<String>,
@@ -57,5 +64,19 @@ pub async fn gettableinfo(
             datatype: row.get("Type"),
         })
         .collect();
+
+    /* Problematic
+    // let query2 = format!("SELECT * FROM {}", table);
+    // let result2 = sqlx::query(&query2).fetch_all(&db).await.unwrap();
+    // Json(result2);
+
+    // let query2 = format!("SELECT * FROM {}", table);
+    // let result2 = sqlx::query(&query2).fetch_all(&db).await.unwrap();
+    // for row in result2.iter() {
+    //     for col in row.columns() {
+    //         let value_any: &dyn Any = row.try_get(col.name()).unwrap().as_ref().as_any();
+    //     }
+    // }
+    */
     Json(to_ret)
 }
