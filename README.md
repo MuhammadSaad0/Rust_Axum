@@ -1,1 +1,1 @@
-Basic Crud using Axum
+Basic CRUD using Axum
