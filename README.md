@@ -1,1 +1,1 @@
-Basic CRUD using Axum
+Basic CRUD using Axum and SQLx
